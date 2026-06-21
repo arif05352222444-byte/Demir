@@ -1,0 +1,35 @@
+name: APK Olustur
+on:
+  push:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - name: Zip'i ac
+        run: |
+          ZIP=$(ls *.zip 2>/dev/null | grep -vi gradle | head -n 1)
+          echo "Acilan zip: $ZIP"
+          if [ -z "$ZIP" ]; then echo "Zip yok!"; exit 1; fi
+          unzip -o "$ZIP"
+      - name: Gradle indir
+        run: |
+          wget -q https://services.gradle.org/distributions/gradle-8.9-bin.zip
+          unzip -q gradle-8.9-bin.zip
+      - name: APK derle
+        run: |
+          DIR=$(dirname "$(find . -name settings.gradle -not -path '*/gradle-8.9/*' | head -n 1)")
+          cd "$DIR"
+          "$GITHUB_WORKSPACE/gradle-8.9/bin/gradle" assembleDebug --no-daemon --stacktrace
+      - name: APK yukle
+        uses: actions/upload-artifact@v4
+        with:
+          name: LED-TV-Banner-APK
+          path: '**/app/build/outputs/apk/debug/app-debug.apk'
+          if-no-files-found: error
